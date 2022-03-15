@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { MemoryDatabase } from './database/memory-database';
 import { RouterModules } from './modules';
 
 @Module({
@@ -11,4 +12,9 @@ import { RouterModules } from './modules';
     }),
   ],
 })
-export class AppModule {}
+export class AppModule {
+  // For db data initializtaion
+  constructor() {
+    MemoryDatabase.getInstance();
+  }
+}

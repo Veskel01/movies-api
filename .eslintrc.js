@@ -24,5 +24,6 @@ module.exports = {
     'comma-dangle': 'off',
     '@typescript-eslint/no-inferrable-types': 'off',
     'prettier/prettier': 'warn',
+    '@typescript-eslint/no-empty-function': 'off',
   },
 };

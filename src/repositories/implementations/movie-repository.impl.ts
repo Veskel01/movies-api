@@ -1,72 +1,70 @@
-import * as fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import { Movie } from '../../modules/movies/movie.model';
 import { MovieRepository } from '../abstractions/movie.repository';
-import { DbData, MovieDTO } from '../../shared_types';
+import { MovieDTO, MemoryDbCollections } from '../../shared_types';
+import { MemoryDatabase } from '../../database/memory-database';
 
 @Injectable()
 export class MovieRepositoryImpl extends MovieRepository {
-  private readonly _filePath: string = `${process.cwd()}/data/db.json`;
+  private _db: MemoryDatabase;
 
-  public async findAll(): Promise<Movie[]> {
-    const { movies } = await this.getDbData();
+  private readonly _moviesCollection: Map<number, MovieDTO>;
 
-    return movies.map((movie) => new Movie(movie));
+  constructor() {
+    super();
+    const db = MemoryDatabase.getInstance();
+
+    this._db = db;
+
+    this._moviesCollection = db.getCollection<number, MovieDTO>(
+      MemoryDbCollections.MOVIES,
+    );
   }
 
-  public async findById(id: number): Promise<Movie> {
-    const { movies } = await this.getDbData();
+  public findAll(): Movie[] {
+    const result: MovieDTO[] = [];
 
-    const singleMovieIndex: number = movies.findIndex(
-      (movie) => movie.id === id,
+    this._moviesCollection.forEach((movie) => {
+      result.push(movie);
+    });
+
+    return result.map((movie) => new Movie(movie));
+  }
+
+  public findById(id: number): Movie {
+    const singleMovie = this._moviesCollection.get(id);
+
+    return new Movie(singleMovie);
+  }
+
+  public async create(data: Partial<MovieDTO>): Promise<Movie> {
+    const movie = new Movie(data);
+
+    const movieId = await this._db.insert<number, Movie>(
+      MemoryDbCollections.MOVIES,
+      movie,
     );
 
-    return new Movie(movies[singleMovieIndex]);
-  }
-
-  public create(data: Partial<MovieDTO>): Movie {
-    return new Movie(data);
+    return new Movie({
+      id: movieId,
+      ...data,
+    });
   }
 
   public async save(model: Movie): Promise<Movie> {
-    const dbData = await this.getDbData();
-
-    const [lastMovie] = [...dbData.movies.slice(-1)];
+    const movieId = await this._db.insert<number, Movie>(
+      MemoryDbCollections.MOVIES,
+      model,
+    );
 
     model.setProperties({
-      id: (lastMovie.id += 1),
+      id: movieId,
     });
-
-    dbData.movies.push(model);
-
-    await this.writeToDb(dbData);
 
     return model;
   }
 
   public async delete(model: Movie): Promise<void> {
-    const dbData = await this.getDbData();
-
-    const movieToDeleteIndex = dbData.movies.findIndex(
-      (movie) => movie.id === model.id,
-    );
-
-    dbData.movies.splice(movieToDeleteIndex, 1);
-
-    await this.writeToDb(dbData);
-  }
-
-  private async writeToDb(data: unknown): Promise<void> {
-    const dataToInsert = JSON.stringify(data, null, 4);
-
-    await fs.promises.writeFile(this._filePath, dataToInsert);
-  }
-
-  private async getDbData(): Promise<DbData> {
-    const readJsonResult = await fs.promises.readFile(this._filePath, 'utf-8');
-
-    const result = JSON.parse(readJsonResult) as DbData;
-
-    return result;
+    await this._db.delete(model.id, MemoryDbCollections.MOVIES);
   }
 }

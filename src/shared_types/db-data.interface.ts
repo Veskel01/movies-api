@@ -1,7 +1,6 @@
-import { Genres } from './genres.type';
+import { MemoryDbCollections } from './collections';
 import { MovieDTO } from './movie-dto.interface';
 
-export interface DbData {
-  genres: Genres[];
-  movies: MovieDTO[];
+export interface SeedData {
+  [MemoryDbCollections.MOVIES]: MovieDTO[];
 }

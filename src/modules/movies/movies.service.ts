@@ -11,11 +11,9 @@ export class MoviesService {
 
   public async addNewMovie(createMovieDto: CreateMovieDTO): Promise<Movie> {
     try {
-      const movie = this.movieRepository.create(createMovieDto);
+      const movie = await this.movieRepository.create(createMovieDto);
 
-      const model = await this.movieRepository.save(movie);
-
-      return model;
+      return movie;
     } catch (e) {
       throw new ApplicationException({
         message: 'An error occurred while adding a new movie',
