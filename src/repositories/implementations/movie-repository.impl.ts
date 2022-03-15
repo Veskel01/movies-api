@@ -31,8 +31,12 @@ export class MovieRepositoryImpl extends MovieRepository {
     return result.map((movie) => new Movie(movie));
   }
 
-  public findById(id: number): Movie {
+  public findById(id: number): Movie | null {
     const singleMovie = this._moviesCollection.get(id);
+
+    if (!singleMovie) {
+      return null;
+    }
 
     return new Movie(singleMovie);
   }

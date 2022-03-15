@@ -29,7 +29,7 @@ export class MoviesService {
     genres,
   }: SearchQueryParams): Promise<Movie[]> {
     try {
-      const movies = await this.movieRepository.findAll();
+      const movies = this.movieRepository.findAll();
 
       const moviesData = movies.reduce((acc, curr, idx, arr) => {
         if (!duration && !genres) {
@@ -69,7 +69,7 @@ export class MoviesService {
   }
 
   public async deleteMovie(movieId: number): Promise<void> {
-    const movie = await this.movieRepository.findById(movieId);
+    const movie = this.movieRepository.findById(movieId);
 
     if (!movie) {
       throw this.getMovieNotFoundException(movieId);
