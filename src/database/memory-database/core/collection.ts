@@ -87,23 +87,6 @@ export class Collection<K extends string | number, T> {
     return this._db.getCollectionData(this._collectionName).length;
   }
 
-  // private _loadDataToMemory(): void {
-  //   const readJsonResult = fs.readFileSync(
-  //     `${process.cwd()}/data/db.json`,
-  //     'utf-8',
-  //   );
-
-  //   const { movies } = JSON.parse(readJsonResult) as SeedData;
-
-  //   this._dbCollections.set(MemoryDbCollections.MOVIES, new Map());
-
-  //   movies.forEach((movieDto) => {
-  //     this._dbCollections
-  //       .get(MemoryDbCollections.MOVIES)
-  //       .set(movieDto.id, movieDto);
-  //   });
-  // }
-
   private getNotFoundException(): Error {
     return new Error('Entity not found');
   }

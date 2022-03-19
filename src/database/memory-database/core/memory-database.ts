@@ -2,8 +2,6 @@ import * as fs from 'fs';
 import { Collection } from './collection';
 import { v4 as uuid } from 'uuid';
 import { IdType } from '../interfaces';
-import { ApplicationException, FileException } from '../../../exceptions';
-import { HttpStatus } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import {
   AdditionalEntityData,
@@ -121,7 +119,7 @@ export class MemoryDatabase {
         },
       };
     } catch (err) {
-      const error = err as FileException;
+      const error = err as Error & { errno: number };
 
       if (error.errno === -4058) {
         this._prepareDatabase(this._pathToFile);
@@ -138,12 +136,7 @@ export class MemoryDatabase {
         };
       }
 
-      throw new ApplicationException({
-        message: 'Failed to store data in memory',
-        messageArgs: [],
-        messageFormat: 'Failed to store data in memory',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      });
+      throw this._getFileException();
     }
   }
 
@@ -254,6 +247,10 @@ export class MemoryDatabase {
     await this.writeToDb(collectionStructure);
 
     return collectionStructure as unknown as SingleDbCollection<unknown>;
+  }
+
+  private _getFileException(): Error {
+    return new Error('Failed to store data in memory');
   }
 
   private _getCollectionNotExistException(): Error {
