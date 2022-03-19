@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { RepositoryModule } from '../../repositories';
+import { MemoryDatabaseModule } from '../../database/memory-database/memory-database.module';
+import { Movie } from './movie.model';
 import { MoviesController } from './movies.controller';
 import { MoviesService } from './movies.service';
 
 @Module({
-  imports: [RepositoryModule.forRepositories(['movie'])],
+  imports: [
+    MemoryDatabaseModule.forFeature({
+      entities: [Movie],
+      idType: 'uuid',
+    }),
+  ],
   controllers: [MoviesController],
   providers: [MoviesService],
 })

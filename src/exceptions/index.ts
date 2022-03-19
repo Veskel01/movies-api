@@ -3,4 +3,6 @@ import {
   ApplicationExceptionBody,
 } from './application.exception';
 
-export { ApplicationException, ApplicationExceptionBody };
+import { FileException } from './file.exception';
+
+export { ApplicationException, ApplicationExceptionBody, FileException };

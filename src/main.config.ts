@@ -22,7 +22,7 @@ export const getGlobalProperties = (): Globals => {
 
       const { property, constraints } = error;
 
-      const firstErrorMessage = Object.values(constraints)[0];
+      const firstErrorMessage = Object.values(constraints || {})[0];
 
       return new ApplicationException({
         message: `Validation error in property: ${property} - ${firstErrorMessage}`,

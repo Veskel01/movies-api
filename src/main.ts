@@ -17,6 +17,8 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(...pipes);
 
-  await app.listen(appPort);
+  app.enableShutdownHooks();
+
+  await app.listen(appPort || 4000);
 }
 bootstrap();

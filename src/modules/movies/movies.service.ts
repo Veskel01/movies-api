@@ -1,24 +1,35 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import * as fs from 'fs';
+import { HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
+import { InjectCollection } from '../../database/memory-database/common';
+import { Collection } from '../../database/memory-database/core';
 import { ApplicationException } from '../../exceptions';
-import { MovieRepository } from '../../repositories';
-import { Genres, SearchQueryParams } from '../../shared_types';
+import { Genres, SearchQueryParams, SeedData } from '../../shared_types';
 import { CreateMovieDTO } from './dto/create-movie.dto';
 import { Movie } from './movie.model';
 
 @Injectable()
-export class MoviesService {
-  constructor(private readonly movieRepository: MovieRepository) {}
+export class MoviesService implements OnModuleInit {
+  constructor(
+    @InjectCollection(Movie)
+    private readonly moviesCollection: Collection<number, Movie>,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this._loadInitialData();
+  }
 
   public async addNewMovie(createMovieDto: CreateMovieDTO): Promise<Movie> {
     try {
-      const movie = await this.movieRepository.create(createMovieDto);
+      const movie = await this.moviesCollection.create(
+        new Movie(createMovieDto),
+      );
 
       return movie;
     } catch (e) {
       throw new ApplicationException({
         message: 'An error occurred while adding a new movie',
         messageArgs: [],
-        messageFormat: 'An error occurred while adding a new video',
+        messageFormat: 'An error occurred while adding a new movie',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
@@ -29,7 +40,9 @@ export class MoviesService {
     genres,
   }: SearchQueryParams): Promise<Movie[]> {
     try {
-      const movies = this.movieRepository.findAll();
+      const movies = this.moviesCollection.findAll({
+        withId: false,
+      });
 
       const moviesData = movies.reduce((acc, curr, idx, arr) => {
         if (!duration && !genres) {
@@ -48,7 +61,7 @@ export class MoviesService {
 
         if (genres) {
           acc = acc.filter(({ genres: movieGenres }) =>
-            movieGenres.some((genre) => genres.includes(genre)),
+            (movieGenres || []).some((genre) => genres.includes(genre)),
           );
         }
 
@@ -59,23 +72,25 @@ export class MoviesService {
         this._sortMoviesComparator(genres, a, b),
       );
     } catch (e) {
+      console.log(e);
+
       throw new ApplicationException({
         message: 'An error occurred while downloading movies',
         messageArgs: [],
-        messageFormat: 'An error occurred while downloading videos',
+        messageFormat: 'An error occurred while downloading movies',
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
 
   public async deleteMovie(movieId: number): Promise<void> {
-    const movie = this.movieRepository.findById(movieId);
+    const movie = this.moviesCollection.findById(movieId);
 
     if (!movie) {
       throw this.getMovieNotFoundException(movieId);
     }
 
-    await this.movieRepository.delete(movie);
+    await this.moviesCollection.delete(movie.id);
   }
 
   private _sortMoviesComparator(
@@ -83,10 +98,10 @@ export class MoviesService {
     firstMovie: Movie,
     secondMovie: Movie,
   ): number {
-    const matchNumberInFirst = firstMovie.genres.map((genre) =>
+    const matchNumberInFirst = (firstMovie.genres || []).map((genre) =>
       genres.includes(genre),
     );
-    const matchNumberInSecond = secondMovie.genres.map((genre) =>
+    const matchNumberInSecond = (secondMovie.genres || []).map((genre) =>
       genres.includes(genre),
     );
 
@@ -103,5 +118,18 @@ export class MoviesService {
       messageFormat: 'Movie with id:%s not found',
       statusCode: HttpStatus.NOT_FOUND,
     });
+  }
+
+  private async _loadInitialData(): Promise<void> {
+    const readJsonResult = fs.readFileSync(
+      `${process.cwd()}/data/db.json`,
+      'utf-8',
+    );
+
+    const { movies } = JSON.parse(readJsonResult) as SeedData;
+
+    for (let i = 0; i < movies.length; i++) {
+      await this.moviesCollection.insert(new Movie(movies[i]));
+    }
   }
 }

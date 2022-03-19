@@ -1,13 +1,13 @@
+import { AbstractEntity } from '../../shared';
 import { Genres, MovieDTO } from '../../shared_types';
 
-export class Movie implements MovieDTO {
+export class Movie extends AbstractEntity<number> implements MovieDTO {
   constructor(data?: Partial<MovieDTO>) {
+    super();
     if (data) {
       Object.assign(this, data);
     }
   }
-
-  public id: number;
 
   public genres: Genres[];
 
@@ -28,8 +28,8 @@ export class Movie implements MovieDTO {
   public setProperties(data: Partial<MovieDTO>): void {
     Object.assign(this, {
       ...data,
-      runtime: +data.runtime,
-      year: +data.year,
+      runtime: Number(data.runtime),
+      year: Number(data.year),
     });
   }
 }

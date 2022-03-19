@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MemoryDatabase } from './database/memory-database';
+import { MemoryDatabaseModule } from './database/memory-database/memory-database.module';
 import { RouterModules } from './modules';
 
 @Module({
@@ -10,11 +10,10 @@ import { RouterModules } from './modules';
       envFilePath: '.env',
       isGlobal: true,
     }),
+    MemoryDatabaseModule.forRoot({
+      pathToFile: `${process.cwd()}/data/db-impl.json`,
+      removeOnShutdown: true,
+    }),
   ],
 })
-export class AppModule {
-  // For db data initializtaion
-  constructor() {
-    MemoryDatabase.getInstance();
-  }
-}
+export class AppModule {}
